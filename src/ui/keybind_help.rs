@@ -54,6 +54,7 @@ pub(super) fn keybind_help_groups(
                 crate::config::format_key_combo((app.prefix_code, app.prefix_mods)),
                 "prefix mode",
             ),
+            ("prefix + prefix".to_string(), "last workspace"),
             (keybind_label(&kb.help), "keybinds"),
             (keybind_label(&kb.settings), "settings"),
             (keybind_label(&kb.detach), "detach"),

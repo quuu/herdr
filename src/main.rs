@@ -89,7 +89,7 @@ const DEFAULT_CONFIG: &str = r##"# herdr configuration
 # new_cwd = "follow"
 
 [keys]
-# Prefix key to enter prefix mode (default: "ctrl+b")
+# Prefix key to enter prefix mode (press again in prefix/navigate mode for last workspace)
 # Examples: "ctrl+b", "f12", "esc", "-"
 # Action bindings use explicit syntax: "prefix+n" requires the prefix;
 # "ctrl+alt+n" is a direct terminal-mode shortcut.

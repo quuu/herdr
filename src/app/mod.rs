@@ -396,6 +396,7 @@ impl App {
             workspaces,
             active,
             previous_pane_focus: None,
+            last_active_workspace_id: None,
             selected,
             mode,
             should_quit: false,
@@ -3147,26 +3148,25 @@ last_pane = "prefix+tab"
         assert_eq!(app.state.workspaces[1].focused_pane_id(), Some(second_root));
     }
 
-    #[tokio::test]
-    async fn route_client_input_double_prefix_passes_prefix_through_to_focused_pane() {
+    #[test]
+    fn route_client_input_double_prefix_switches_to_last_active_workspace() {
         let mut app = test_app();
-        let mut workspace = Workspace::test_new("test");
-        let focused = workspace.focused_pane_id().unwrap();
-        let (runtime, mut rx) = TerminalRuntime::test_with_channel(80, 24);
-        workspace.tabs[0].runtimes.insert(focused, runtime);
-        app.state.workspaces = vec![workspace];
+        app.state.workspaces = vec![Workspace::test_new("one"), Workspace::test_new("two")];
         app.state.active = Some(0);
         app.state.selected = 0;
         app.state.mode = Mode::Terminal;
         app.state.prefix_code = KeyCode::Char('l');
         app.state.prefix_mods = KeyModifiers::CONTROL;
 
+        app.state.switch_workspace(1);
+        assert_eq!(app.state.active, Some(1));
+
         app.route_client_input(vec![0x0c]);
         assert_eq!(app.state.mode, Mode::Prefix);
 
         app.route_client_input(vec![0x0c]);
         assert_eq!(app.state.mode, Mode::Terminal);
-        assert_eq!(rx.recv().await.unwrap(), bytes::Bytes::from(vec![0x0c]));
+        assert_eq!(app.state.active, Some(0));
     }
 
     #[tokio::test]

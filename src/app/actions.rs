@@ -745,11 +745,18 @@ impl AppState {
     pub fn switch_workspace(&mut self, idx: usize) {
         if idx < self.workspaces.len() {
             let previous_focus = self.current_pane_focus_target();
+            let previous_workspace_id = self
+                .active
+                .and_then(|active| self.workspaces.get(active))
+                .map(|ws| ws.id.clone());
+            let workspace_id = self.workspaces[idx].id.clone();
+            if previous_workspace_id.as_deref() != Some(workspace_id.as_str()) {
+                self.last_active_workspace_id = previous_workspace_id;
+            }
             self.selection = None;
             self.selection_autoscroll = None;
             self.active = Some(idx);
             self.selected = idx;
-            let workspace_id = self.workspaces[idx].id.clone();
             crate::logging::workspace_focused(&workspace_id);
             self.mark_session_dirty();
             if matches!(
@@ -768,6 +775,33 @@ impl AppState {
             self.tab_scroll_follow_active = true;
             self.refresh_tab_bar_view();
             self.record_pane_focus_after_navigation(previous_focus);
+        }
+    }
+
+    pub fn switch_to_last_active_workspace(&mut self) -> bool {
+        let Some(workspace_id) = self.last_active_workspace_id.clone() else {
+            return false;
+        };
+        let Some(idx) = self
+            .workspaces
+            .iter()
+            .position(|workspace| workspace.id == workspace_id)
+        else {
+            self.last_active_workspace_id = None;
+            return false;
+        };
+        if self.active == Some(idx) {
+            self.last_active_workspace_id = None;
+            return false;
+        }
+
+        self.switch_workspace(idx);
+        true
+    }
+
+    fn clear_last_active_workspace_if(&mut self, workspace_id: &str) {
+        if self.last_active_workspace_id.as_deref() == Some(workspace_id) {
+            self.last_active_workspace_id = None;
         }
     }
 
@@ -1240,6 +1274,9 @@ impl AppState {
             }
         }
         for idx in close_indices.iter().rev() {
+            if let Some(workspace_id) = self.workspaces.get(*idx).map(|ws| ws.id.clone()) {
+                self.clear_last_active_workspace_if(&workspace_id);
+            }
             self.workspaces.remove(*idx);
         }
         self.remove_unattached_terminal_ids(terminal_ids);
@@ -2184,6 +2221,8 @@ impl AppState {
         self.mark_session_dirty();
 
         if should_close_workspace {
+            let workspace_id = self.workspaces[ws_idx].id.clone();
+            self.clear_last_active_workspace_if(&workspace_id);
             self.workspaces.remove(ws_idx);
             self.remove_unattached_terminal_ids(workspace_terminal_ids);
             if self.workspaces.is_empty() {
@@ -3035,6 +3074,37 @@ mod tests {
         assert_eq!(state.workspaces[1].active_tab, second_tab);
         assert_eq!(state.workspaces[1].focused_pane_id(), Some(second_tab_root));
         assert_ne!(second_first_root, second_tab_root);
+    }
+
+    #[test]
+    fn switch_workspace_tracks_last_active_workspace() {
+        let mut state = app_with_workspaces(&["a", "b", "c"]);
+        let first_id = state.workspaces[0].id.clone();
+        let second_id = state.workspaces[1].id.clone();
+
+        state.switch_workspace(1);
+        assert_eq!(
+            state.last_active_workspace_id.as_deref(),
+            Some(first_id.as_str())
+        );
+
+        assert!(state.switch_to_last_active_workspace());
+        assert_eq!(state.active, Some(0));
+        assert_eq!(
+            state.last_active_workspace_id.as_deref(),
+            Some(second_id.as_str())
+        );
+    }
+
+    #[test]
+    fn switch_to_last_active_workspace_ignores_closed_workspace() {
+        let mut state = app_with_workspaces(&["a", "b"]);
+        let first_id = state.workspaces[0].id.clone();
+        state.last_active_workspace_id = Some(first_id);
+        state.workspaces.remove(0);
+
+        assert!(!state.switch_to_last_active_workspace());
+        assert_eq!(state.last_active_workspace_id, None);
     }
 
     #[test]

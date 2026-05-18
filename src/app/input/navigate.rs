@@ -5,7 +5,6 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use bytes::Bytes;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::Direction;
 
@@ -39,9 +38,8 @@ impl App {
         self.state.update_dismissed = true;
 
         if self.state.is_prefix_key(raw_key) {
-            if !self.pass_through_key_to_focused_pane(raw_key) {
-                leave_command_mode(&mut self.state);
-            }
+            self.state.switch_to_last_active_workspace();
+            leave_command_mode(&mut self.state);
             return;
         }
 
@@ -79,7 +77,13 @@ impl App {
         let key = raw_key.as_key_event();
         self.state.update_dismissed = true;
 
-        if key.code == KeyCode::Esc || self.state.is_prefix_key(raw_key) {
+        if self.state.is_prefix_key(raw_key) {
+            self.state.switch_to_last_active_workspace();
+            leave_navigate_mode(&mut self.state);
+            return;
+        }
+
+        if key.code == KeyCode::Esc {
             leave_navigate_mode(&mut self.state);
             return;
         }
@@ -106,26 +110,6 @@ impl App {
         if let Some(binding) = command_for_key(&self.state, raw_key, BindingDispatch::Prefix) {
             self.launch_custom_command(binding, ActionContext::Navigate);
         }
-    }
-
-    fn pass_through_key_to_focused_pane(&mut self, key: TerminalKey) -> bool {
-        let Some(ws_idx) = self.state.active else {
-            return false;
-        };
-        let Some(rt) = self
-            .state
-            .focused_runtime_in_workspace(&self.terminal_runtimes, ws_idx)
-        else {
-            return false;
-        };
-
-        let bytes = rt.encode_terminal_key(key);
-        if bytes.is_empty() || rt.try_send_bytes(Bytes::from(bytes)).is_err() {
-            return false;
-        }
-
-        self.state.mode = Mode::Terminal;
-        true
     }
 
     pub(super) fn launch_custom_command(
@@ -453,7 +437,13 @@ pub(crate) fn handle_navigate_key(state: &mut AppState, key: KeyEvent) {
     state.update_dismissed = true;
     let terminal_key = TerminalKey::from(key);
 
-    if state.is_prefix_key(terminal_key) || key.code == KeyCode::Esc {
+    if state.is_prefix_key(terminal_key) {
+        state.switch_to_last_active_workspace();
+        leave_navigate_mode(state);
+        return;
+    }
+
+    if key.code == KeyCode::Esc {
         leave_navigate_mode(state);
         return;
     }
@@ -1082,6 +1072,19 @@ mod tests {
     }
 
     #[test]
+    fn prefix_in_navigate_switches_to_last_active_workspace() {
+        let mut state = state_with_workspaces(&["one", "two"]);
+        state.switch_workspace(1);
+        state.mode = Mode::Navigate;
+        let prefix = KeyEvent::new(state.prefix_code, state.prefix_mods);
+
+        handle_navigate_key(&mut state, prefix);
+
+        assert_eq!(state.active, Some(0));
+        assert_eq!(state.mode, Mode::Terminal);
+    }
+
+    #[test]
     fn worktree_actions_do_not_start_from_linked_child_workspace() {
         let mut terminal_runtimes = TerminalRuntimeRegistry::new();
         let mut state = state_with_workspaces(&["main", "issue"]);
@@ -1181,6 +1184,17 @@ mod tests {
 
         assert_eq!(state.active, Some(2));
         assert_eq!(state.selected, 2);
+    }
+
+    #[test]
+    fn prefix_in_navigate_exits_when_no_last_active_workspace() {
+        let mut state = state_with_workspaces(&["one"]);
+        let prefix = KeyEvent::new(state.prefix_code, state.prefix_mods);
+
+        handle_navigate_key(&mut state, prefix);
+
+        assert_eq!(state.active, Some(0));
+        assert_eq!(state.mode, Mode::Terminal);
     }
 
     #[test]
