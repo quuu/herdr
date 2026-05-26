@@ -107,7 +107,7 @@ pub(super) fn render_navigate_overlay(app: &AppState, frame: &mut Frame, area: R
         Span::styled(close_pane, key),
         Span::styled(" close  ", dim),
         Span::styled(zoom, key),
-        Span::styled(" zoom  ", dim),
+        Span::styled(" full screen  ", dim),
         Span::styled(resize, key),
         Span::styled(" resize  ", dim),
         Span::styled(help, key),

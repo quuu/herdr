@@ -127,7 +127,7 @@ pub(super) fn keybind_help_groups(
         (keybind_label(&kb.close_pane), "close pane"),
         (keybind_label(&kb.rename_pane), "rename pane"),
         (keybind_label(&kb.edit_scrollback), "edit scrollback"),
-        (keybind_label(&kb.zoom), "zoom pane"),
+        (keybind_label(&kb.zoom), "full screen pane"),
         (keybind_label(&kb.resize_mode), "resize mode"),
         (keybind_label(&kb.toggle_sidebar), "toggle sidebar"),
         (keybind_label(&kb.focus_pane_left), "focus pane left"),

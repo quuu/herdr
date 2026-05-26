@@ -963,7 +963,7 @@ impl ContextMenuState {
                 "Clear pane name",
                 "Split vertical",
                 "Split horizontal",
-                "Zoom",
+                "Full screen",
                 "Close pane",
             ],
             ContextMenuKind::Pane {
@@ -973,7 +973,7 @@ impl ContextMenuState {
                 "Rename pane",
                 "Split vertical",
                 "Split horizontal",
-                "Zoom",
+                "Full screen",
                 "Close pane",
             ],
         }
