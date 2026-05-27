@@ -89,7 +89,7 @@ const DEFAULT_CONFIG: &str = r##"# herdr configuration
 # new_cwd = "follow"
 
 [keys]
-# Prefix key to enter prefix mode (default: "ctrl+b")
+# Prefix key to enter prefix mode (press again in prefix/navigate mode for last workspace)
 # Examples: "ctrl+b", "f12", "esc", "-"
 # Action bindings use explicit syntax: "prefix+n" requires the prefix;
 # "ctrl+alt+n" is a direct terminal-mode shortcut.
@@ -137,7 +137,7 @@ const DEFAULT_CONFIG: &str = r##"# herdr configuration
 # split_vertical = "prefix+v"
 # split_horizontal = "prefix+minus"
 # close_pane = "prefix+x"
-# zoom = "prefix+z"       # legacy alias: fullscreen
+# zoom = "prefix+f"       # legacy alias: fullscreen
 # resize_mode = "prefix+r"
 # toggle_sidebar = "prefix+b"
 

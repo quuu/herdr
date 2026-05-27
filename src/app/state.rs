@@ -963,7 +963,7 @@ impl ContextMenuState {
                 "Clear pane name",
                 "Split vertical",
                 "Split horizontal",
-                "Zoom",
+                "Full screen",
                 "Close pane",
             ],
             ContextMenuKind::Pane {
@@ -973,7 +973,7 @@ impl ContextMenuState {
                 "Rename pane",
                 "Split vertical",
                 "Split horizontal",
-                "Zoom",
+                "Full screen",
                 "Close pane",
             ],
         }
@@ -1049,6 +1049,7 @@ pub struct AppState {
     pub workspaces: Vec<Workspace>,
     pub active: Option<usize>,
     pub(crate) previous_pane_focus: Option<PaneFocusTarget>,
+    pub(crate) last_active_workspace_id: Option<String>,
     pub selected: usize,
     pub mode: Mode,
     pub should_quit: bool,
@@ -1352,6 +1353,7 @@ impl AppState {
             workspaces: Vec::new(),
             active: None,
             previous_pane_focus: None,
+            last_active_workspace_id: None,
             selected: 0,
             mode: Mode::Navigate,
             should_quit: false,

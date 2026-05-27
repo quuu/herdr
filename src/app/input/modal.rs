@@ -722,7 +722,7 @@ pub(super) fn apply_context_menu_action(
             state.split_pane(terminal_runtimes, Direction::Vertical);
             state.mode = Mode::Terminal;
         }
-        (ContextMenuKind::Pane { .. }, Some("Zoom")) => {
+        (ContextMenuKind::Pane { .. }, Some("Full screen")) => {
             state.toggle_zoom();
             state.mode = Mode::Terminal;
         }

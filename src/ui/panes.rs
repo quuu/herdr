@@ -1,5 +1,5 @@
 use ratatui::{
-    layout::Rect,
+    layout::{Alignment, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
@@ -254,7 +254,8 @@ pub(super) fn render_panes(
 
     for info in &app.view.pane_infos {
         if let Some(rt) = app.runtime_for_pane_in_workspace(terminal_runtimes, ws_idx, info.id) {
-            if multi_pane {
+            let framed = multi_pane || ws.zoomed;
+            if framed {
                 let (border_style, border_set) = if info.is_focused && terminal_active {
                     (
                         Style::default().fg(app.palette.accent),
@@ -276,7 +277,18 @@ pub(super) fn render_panes(
                     .borders(Borders::ALL)
                     .border_style(border_style)
                     .border_set(border_set);
-                if let Some(title) = ws
+                if ws.zoomed {
+                    let title = " full screen ";
+                    if info.rect.width > title.chars().count() as u16 + 2 {
+                        block = block.title(
+                            Line::from(Span::styled(
+                                title,
+                                border_style.add_modifier(Modifier::BOLD),
+                            ))
+                            .alignment(Alignment::Right),
+                        );
+                    }
+                } else if let Some(title) = ws
                     .pane_state(info.id)
                     .and_then(|pane| app.terminals.get(&pane.attached_terminal_id))
                     .and_then(|terminal| {
@@ -313,8 +325,32 @@ pub(super) fn render_panes(
                 rt.scroll_metrics(),
                 &app.palette,
             );
+
+            if ws.zoomed {
+                render_full_screen_badge(app, frame, info.rect);
+            }
         }
     }
+}
+
+fn render_full_screen_badge(app: &AppState, frame: &mut Frame, area: Rect) {
+    let label = " full screen ";
+    let label_width = label.chars().count() as u16;
+    if area.width < label_width.saturating_add(2) || area.height == 0 {
+        return;
+    }
+
+    let rect = Rect::new(
+        area.x + area.width.saturating_sub(label_width + 1),
+        area.y,
+        label_width,
+        1,
+    );
+    let style = Style::default()
+        .fg(panel_contrast_fg(&app.palette))
+        .bg(app.palette.accent)
+        .add_modifier(Modifier::BOLD);
+    frame.render_widget(Paragraph::new(label).style(style), rect);
 }
 
 fn render_selection_highlight(

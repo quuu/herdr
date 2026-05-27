@@ -219,7 +219,7 @@ pub struct KeysConfig {
     pub split_horizontal: BindingConfig,
     /// Close the focused pane. Default: "prefix+x"
     pub close_pane: BindingConfig,
-    /// Toggle zoom for the focused pane. Default: "prefix+z"
+    /// Toggle full screen for the focused pane. Default: "prefix+f"
     #[serde(alias = "fullscreen")]
     pub zoom: BindingConfig,
     /// Enter resize mode. Default: "prefix+r"
@@ -399,7 +399,7 @@ impl Default for KeysConfig {
             split_vertical: BindingConfig::one("prefix+v"),
             split_horizontal: BindingConfig::one("prefix+minus"),
             close_pane: BindingConfig::one("prefix+x"),
-            zoom: BindingConfig::one("prefix+z"),
+            zoom: BindingConfig::one("prefix+f"),
             resize_mode: BindingConfig::one("prefix+r"),
             toggle_sidebar: BindingConfig::one("prefix+b"),
             indexed: IndexedKeysConfig::default(),
